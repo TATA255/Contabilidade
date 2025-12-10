@@ -8,7 +8,7 @@
 </head>
 <body>
     <img src="/imagens/login.png" alt="">
-    <div class="conteiner">
+    <div id="login" class="conteiner">
         <h1>Login</h1>
         <div class="login">
             <input type="email" name="" id="">
@@ -17,8 +17,30 @@
             <input class="senha" type="password" name="" id="">
             <button>👁</button>
         </div>
-        <a href="">Criar conta</a>
+        <button class="telaCadastro" onclick="cadastrar()">Criar conta</button>
         <button class="entrar">Entrar</button>
     </div>
+
+
+    <div id="cadastrar" class="conteinerCadastrar sumir">
+        <h1>Cadastrars</h1>
+                <div class="login">
+            <input type="email" name="" id="">
+        </div>
+        <div class="login">
+            <input class="senha" type="password" name="" id="">
+            <button>👁</button>
+        </div>
+                <div class="login">
+            <input class="senha" type="password" name="" id="">
+            <button>👁</button>
+        </div>
+        <button class="telaLogin" onclick="login()">Entrar</button>
+        <button class="cadastrar">Cadastrar</button>
+    </div>
+
+
+
+    <script src="script.js"></script>
 </body>
 </html>
