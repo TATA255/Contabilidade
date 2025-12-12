@@ -1,53 +1,63 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="styles.css">
-    <title>Login</title>
+    <title>Login e Cadastro</title>
+    <link rel="stylesheet" href="styles.css"> 
 </head>
 <body>
-    <img src="/imagens/logo.png" alt="">
+    <img src="/imagens/logo.png" alt=""> 
+
+    <div id="alerta-mensagem" class="alerta-escondido"></div>
+
     <div id="login" class="conteiner">
         <h1>Login</h1>
         <div class="login">
-            <input type="email" name="" id="" placeholder="E-mail">
+            <input type="email" id="login-email" placeholder="E-mail">
         </div>
         <div class="login">
-            <input class="senha" type="password" name="" id="" placeholder="Senha">
-            <button>👁</button>
+            <input class="senha" type="password" id="login-senha" placeholder="Senha">
+            <button id="toggle-login-senha">👁</button>
         </div>
         <div class="direita">
-            <button class="telaCadastro" onclick="cadastrar()">Criar conta</button>
+            <button class="telaCadastro" onclick="mudarParaCadastro()">Criar conta</button>
         </div>
-        <button class="entrar">Entrar</button>
+        <button class="entrar" id="btn-login">Entrar</button>
     </div>
-
 
     <div id="cadastrar" class="conteinerCadastrar sumir">
-        <h1>Cadastrars</h1>
+        <h1>Cadastro</h1>
         <div class="login">
-            <input type="text" name="" id="" placeholder="Nome Completo">
+            <input type="text" id="cadastro-nome" placeholder="Nome Completo">
         </div>
 
         <div class="login">
-            <input type="email" name="" id="" placeholder="E-mail">
+            <input type="email" id="cadastro-email" placeholder="E-mail">
+        </div>
+        
+        <div class="login">
+            <select id="cadastro-nivel">
+                <option value="" disabled selected>Nível de Acesso...</option>
+                <option value="CLIENTE">Cliente</option>
+                <option value="BARBEIRO">Barbeiro</option>
+                <option value="ADMIN">Administrador</option>
+            </select>
+        </div>
+
+        <div class="login">
+            <input class="senha" type="password" id="cadastro-senha" placeholder="Senha">
+            <button id="toggle-cad-senha">👁</button>
         </div>
         <div class="login">
-            <input class="senha" type="password" name="" id="" placeholder="Senha ">
-            <button>👁</button>
-        </div>
-                <div class="login">
-            <input class="senha" type="password" name="" id="" placeholder="Confirmar Senha">
-            <button>👁</button>
+            <input class="senha" type="password" id="cadastro-confirma-senha" placeholder="Confirmar Senha">
+            <button id="toggle-cad-confirma">👁</button>
         </div>
         <div class="direita">
-            <button class="telaLogin" onclick="login()">Entrar</button>
+            <button class="telaLogin" onclick="mudarParaLogin()">Entrar</button>
         </div>
-        <button class="cadastrar">Cadastrar</button>
+        <button class="cadastrar" id="btn-cadastro">Cadastrar</button>
     </div>
-
-
 
     <script src="script.js"></script>
 </body>
