@@ -11,6 +11,9 @@ body{
     align-items: center;
 }
 
+h1{
+    display: flex;
+}
 
 img{
     width: 100%;
