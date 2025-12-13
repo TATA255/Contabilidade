@@ -125,7 +125,9 @@ async function handleLogin() {
 
     if (resultado.sucesso) {
         exibirAlerta(`Login efetuado! Bem-vindo(a), ${resultado.nome}. Nível: ${resultado.nivel}`, 'sucesso');
-        // Ação pós-login (Ex: Armazenar token, redirecionar para dashboard)
+        if(resultado.nivel == "CONTADOR"){
+            window.location.href = 'Contador/contador.html';
+        }
         loggedInUserEmail = email; 
         console.log("Usuário logado:", loggedInUserEmail);
         // Exemplo: window.location.href = 'dashboard.html';
