@@ -1,80 +1,113 @@
-// ====================================================================
-// CONFIGURAÇÃO: COLOQUE A URL DO SEU APPS SCRIPT AQUI
-// ====================================================================
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz4REQwilJ_PUyPvU7LaKwHRQ-H9uxO1GwZQiGTp2AXFKstcY7WhwP63Y9Ts9rWYO_2/exec'; 
-// Exemplo: 'https://script.google.com/macros/s/AKfyc.../exec'
+// =========================================================================
+// CONFIGURAÇÃO DA APLICAÇÃO E VARIÁVEIS GLOBAIS
+// =========================================================================
 
-// ====================================================================
-// FUNÇÕES AUXILIARES DE INTERFACE
-// ====================================================================
+// 🛑 URL DA SUA API PRINCIPAL (LOGIN/CADASTRO/DADOS) - VERIFIQUE ESTA URL!
+// Use A MESMA URL que você implementou no Apps Script.
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz4REQwilJ_PUyPvU7LaKwHRQ-H9uxO1GwZQiGTp2AXFKstcY7WhwP63Y9Ts9rWYO_2/exec'; 
+
+// VARIÁVEIS GLOBAIS (Elementos DOM)
+const loginDiv = document.getElementById('login');
+const cadastroDiv = document.getElementById('cadastrar');
+const alertaElement = document.getElementById('alerta-mensagem');
+const loginBtn = document.getElementById('btn-login');
+const cadastroBtn = document.getElementById('btn-cadastro');
+
+// Variáveis de estado
+let loggedInUserEmail = ''; // Mantenha isso para controle de sessão/dados
+
+// =========================================================================
+// FUNÇÕES DE UTILIDADE E UI
+// =========================================================================
 
 function mudarParaLogin(){
-    document.getElementById("login").classList.remove("sumir");
-    document.getElementById("cadastrar").classList.add("sumir");
+    if (loginDiv) loginDiv.classList.remove("sumir");
+    if (cadastroDiv) cadastroDiv.classList.add("sumir");
     esconderAlerta();
 }
 
 function mudarParaCadastro(){
-    document.getElementById("login").classList.add("sumir");
-    document.getElementById("cadastrar").classList.remove("sumir");
+    if (loginDiv) loginDiv.classList.add("sumir");
+    if (cadastroDiv) cadastroDiv.classList.remove("sumir");
     esconderAlerta();
 }
 
 function exibirAlerta(mensagem, tipo) {
-    const alerta = document.getElementById('alerta-mensagem');
-    alerta.textContent = mensagem;
-    alerta.className = '';
-    alerta.classList.add(tipo === 'sucesso' ? 'alerta-sucesso' : 'alerta-erro');
-    alerta.classList.remove('alerta-escondido');
+    if (!alertaElement) return;
+
+    alertaElement.textContent = mensagem;
+    // Classes de estilo (você deve definir 'alerta-sucesso', 'alerta-erro', 'alerta-info', 'alerta-escondido' no seu CSS)
+    alertaElement.className = ''; 
+    alertaElement.classList.add(tipo === 'sucesso' ? 'alerta-sucesso' : 
+                                tipo === 'erro' ? 'alerta-erro' : 
+                                'alerta-info');
+    alertaElement.classList.remove('alerta-escondido');
 }
 
 function esconderAlerta() {
-    document.getElementById('alerta-mensagem').classList.add('alerta-escondido');
+    if (alertaElement) alertaElement.classList.add('alerta-escondido');
 }
 
-// ====================================================================
-// FUNÇÃO DE COMUNICAÇÃO COM A API APPS SCRIPT (fetch)
-// ====================================================================
+// Função para alternar visibilidade da senha (exemplo, requer os IDs 'toggle-...')
+function setupToggleSenha(inputId, buttonId) {
+    const input = document.getElementById(inputId);
+    const button = document.getElementById(buttonId);
+    
+    if (input && button) {
+        button.addEventListener('click', () => {
+            if (input.type === 'password') {
+                input.type = 'text';
+                button.textContent = '🔒'; 
+            } else {
+                input.type = 'password';
+                button.textContent = '👁'; 
+            }
+        });
+    }
+}
 
-/**
- * Envia dados para o Apps Script usando a função doPost.
- * @param {string} action - Ação a ser executada ('cadastrar' ou 'login').
- * @param {object} payload - Os dados a serem enviados.
- */
+
+// =========================================================================
+// FUNÇÃO DE COMUNICAÇÃO UNIFICADA (fetch com FormData - ANTI-CORS)
+// =========================================================================
+
 async function sendDataToAppsScript(action, payload) {
     if (WEB_APP_URL.includes('COLE A URL')) {
-        return { sucesso: false, mensagem: "ERRO: Insira a URL do Apps Script na constante WEB_APP_URL." };
+        return { sucesso: false, mensagem: "ERRO CRÍTICO: Insira a URL do Apps Script na constante WEB_APP_URL." };
+    }
+    
+    const formData = new FormData();
+    formData.append('action', action); 
+
+    for (const key in payload) {
+        if (Object.hasOwnProperty.call(payload, key)) {
+             formData.append(key, payload[key]);
+        }
     }
     
     try {
         const response = await fetch(WEB_APP_URL, {
             method: 'POST',
-            mode: 'cors', // Necessário para desenvolvimento local
-            cache: 'no-cache',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ action, payload }) 
+            body: formData, 
+            // O modo 'cors' é implícito aqui, mas o FormData garante que seja uma requisição "simples"
         });
         
         if (!response.ok) {
-            // Se a resposta HTTP não for 200 (OK), houve um erro na requisição
             throw new Error(`Erro HTTP: ${response.status} ${response.statusText}`);
         }
         
-        // O Apps Script retorna JSON
+        // A API Apps Script sempre retorna um JSON
         return await response.json();
 
     } catch (error) {
         console.error("Erro na comunicação com o Apps Script:", error);
-        // Este é o erro que o CORS causava (ou um erro de rede real)
-        return { sucesso: false, mensagem: `Erro de rede ou API: ${error.message}. Se estiver no VS Code, verifique as configurações de CORS.` };
+        return { sucesso: false, mensagem: `Erro de rede ou API: ${error.message}` };
     }
 }
 
-// ====================================================================
+// =========================================================================
 // FUNÇÕES DE EVENTO (HANDLE LOGIN E CADASTRO)
-// ====================================================================
+// =========================================================================
 
 async function handleLogin() {
     esconderAlerta();
@@ -87,11 +120,15 @@ async function handleLogin() {
 
     exibirAlerta('Verificando credenciais...', 'alerta-info');
     
-    const payload = { email, senha };
-    const resultado = await sendDataToAppsScript('login', payload);
+    const payload = { email, senha }; 
+    const resultado = await sendDataToAppsScript('login', payload); 
 
     if (resultado.sucesso) {
         exibirAlerta(`Login efetuado! Bem-vindo(a), ${resultado.nome}. Nível: ${resultado.nivel}`, 'sucesso');
+        // Ação pós-login (Ex: Armazenar token, redirecionar para dashboard)
+        loggedInUserEmail = email; 
+        console.log("Usuário logado:", loggedInUserEmail);
+        // Exemplo: window.location.href = 'dashboard.html';
     } else {
         exibirAlerta(resultado.mensagem, 'erro');
     }
@@ -115,48 +152,42 @@ async function handleCadastro() {
 
     exibirAlerta('Enviando dados para cadastro...', 'alerta-info');
 
-    const payload = { nome, email, senha, nivel };
-    const resultado = await sendDataToAppsScript('cadastrar', payload);
+    const payload = { nome, email, senha, nivel }; 
+    const resultado = await sendDataToAppsScript('cadastrar', payload); 
 
     if (resultado.sucesso) {
-        exibirAlerta(`Sucesso! ${resultado.mensagem}`, 'sucesso');
+        exibirAlerta(`Sucesso! ${resultado.mensagem}. Faça login para continuar.`, 'sucesso');
+        
         // Limpa e muda para login
         document.getElementById('cadastro-nome').value = '';
         document.getElementById('cadastro-email').value = '';
         document.getElementById('cadastro-senha').value = '';
         document.getElementById('cadastro-confirma-senha').value = '';
-        document.getElementById('cadastro-nivel').value = ''; 
         mudarParaLogin();
     } else {
         exibirAlerta(resultado.mensagem, 'erro');
     }
 }
 
-// ====================================================================
+
+// =========================================================================
 // INICIALIZAÇÃO
-// ====================================================================
+// =========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('btn-login').addEventListener('click', handleLogin);
-    document.getElementById('btn-cadastro').addEventListener('click', handleCadastro);
+    // Liga os botões
+    if (loginBtn) loginBtn.addEventListener('click', handleLogin);
+    if (cadastroBtn) cadastroBtn.addEventListener('click', handleCadastro);
     
-    // Função para alternar visibilidade da senha
-    const toggleSenha = (inputId, buttonId) => {
-        const input = document.getElementById(inputId);
-        const button = document.getElementById(buttonId);
-        
-        button.addEventListener('click', () => {
-            if (input.type === 'password') {
-                input.type = 'text';
-                button.textContent = '🔒';
-            } else {
-                input.type = 'password';
-                button.textContent = '👁';
-            }
-        });
-    };
+    // Liga os toggles de senha (se existirem no seu HTML)
+    setupToggleSenha('login-senha', 'toggle-login-senha');
+    setupToggleSenha('cadastro-senha', 'toggle-cad-senha');
+    setupToggleSenha('cadastro-confirma-senha', 'toggle-cad-confirma');
+    
+    // Liga os botões de alternar entre login/cadastro
+    document.getElementById('link-cadastro')?.addEventListener('click', mudarParaCadastro);
+    document.getElementById('link-login')?.addEventListener('click', mudarParaLogin);
 
-    toggleSenha('login-senha', 'toggle-login-senha');
-    toggleSenha('cadastro-senha', 'toggle-cad-senha');
-    toggleSenha('cadastro-confirma-senha', 'toggle-cad-confirma');
+    // Garante que a tela de login/cadastro inicial correta esteja visível
+    mudarParaLogin();
 });
