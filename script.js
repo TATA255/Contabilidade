@@ -140,7 +140,7 @@ async function handleCadastro() {
     const email = document.getElementById('cadastro-email').value;
     const senha = document.getElementById('cadastro-senha').value;
     const confirmaSenha = document.getElementById('cadastro-confirma-senha').value;
-    const nivel = document.getElementById('cadastro-nivel').value;
+    const nivel = "CLIENTE";
 
     if (!nome || !email || !senha || !confirmaSenha || !nivel) {
         return exibirAlerta('Preencha todos os campos do cadastro.', 'erro');
