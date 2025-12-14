@@ -214,11 +214,6 @@ function renderizarDashboard(dados, nome, dataInicial, dataFinal) {
             icon: 'fas fa-file-invoice-dollar', class: 'card-imposto', 
             valor: dados.IMPOSTO 
         },
-        { 
-            key: 'SALDO', label: 'Saldo Líquido (Aprox.)', 
-            icon: 'fas fa-hand-holding-usd', class: 'card-saldo', 
-            valor: dados.RENDIMENTO - dados.IMPOSTO 
-        }
     ];
     
     // Cria e insere os cards no DOM
