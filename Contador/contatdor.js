@@ -207,7 +207,7 @@ function renderizarDashboard(dados, nome, dataInicial, dataFinal) {
         { 
             key: 'BASE_DE_CALCULO', label: 'Base de Cálculo', 
             icon: 'fas fa-calculator', class: 'card-base-calculo', 
-            valor: dados.BASE_DE_CALCULO 
+            valor: dados.RENDIMENTO - dados.DEDUÇÕES 
         },
         { 
             key: 'IMPOSTO', label: 'Imposto Devido', 
