@@ -180,7 +180,7 @@ function renderizarDashboard(dados, nome, dataInicial, dataFinal) {
     if (!dadosResumoDiv) return;
 
     dadosResumoDiv.innerHTML = ''; 
-    btnVerDetalhes.style.display = 'flex';
+    btnVerDetalhes.style.display = 'none';
 
     if (Object.keys(dados).length === 0 || dados.RENDIMENTO === undefined) {
          tituloPeriodo.textContent = `Nenhum dado financeiro encontrado para ${nome} no período de ${dataInicial} a ${dataFinal}.`;
