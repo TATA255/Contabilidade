@@ -20,6 +20,12 @@ const alertaElement = document.getElementById('alerta-mensagem');
 // FUNÇÕES DE UTILIDADE E UI
 // =========================================================================
 
+
+function sair(){
+    window.location.href = "/index.html";
+}
+
+
 function exibirAlerta(mensagem, tipo) {
     if (alertaElement) {
         alertaElement.textContent = mensagem;
