@@ -14,7 +14,8 @@ const btnBuscarDados = document.getElementById('btn-buscar-dados');
 const dadosResumoDiv = document.getElementById('dados-resumo-autonomo');
 const tituloPeriodo = document.getElementById('titulo-periodo');
 const btnVerDetalhes = document.getElementById('btn-ver-detalhes');
-const alertaElement = document.getElementById('alerta-mensagem'); 
+const alertaElement = document.getElementById('alerta-mensagem');
+let meuGrafico = null; // Para podermos destruir e recriar o gráfico 
 
 // =========================================================================
 // FUNÇÕES DE UTILIDADE E UI
@@ -235,6 +236,7 @@ function renderizarDashboard(dados, nome, dataInicial, dataFinal) {
         `;
         dadosResumoDiv.appendChild(card);
     });
+    renderizarGrafico(dados.DADOS_GRAFICO);
 }
 
 
@@ -270,3 +272,49 @@ document.addEventListener('DOMContentLoaded', () => {
     alternarPainel('AUTONOMOS');
     carregarListaAutonomos(); 
 });
+
+function renderizarGrafico(dadosMensais) {
+    const ctx = document.getElementById('graficoAutonomo').getContext('2d');
+    const container = document.getElementById('container-grafico');
+    
+    if (container) container.style.display = 'block';
+    if (meuGrafico) meuGrafico.destroy(); // Limpa o gráfico anterior
+
+    const labels = dadosMensais.map(d => d.mes);
+    const valores = dadosMensais.map(d => d.rendimento);
+
+    meuGrafico = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Rendimento Mensal',
+                data: valores,
+                fill: true, // Cria o efeito de área
+                backgroundColor: 'rgba(52, 152, 219, 0.2)', // Azul claro transparente
+                borderColor: '#3498db', // Azul do card
+                borderWidth: 3,
+                tension: 0.4, // Curva suave
+                pointBackgroundColor: '#3498db',
+                pointRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'R$ ' + value.toLocaleString('pt-BR');
+                        }
+                    }
+                }
+            }
+        }
+    });
+}

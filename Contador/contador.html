@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="/Contador/contador.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <title>Dashboard Contador</title>
 </head>
 <body>
@@ -74,6 +75,10 @@
                         </div>
                 </div>
 
+                <div class="grafico-container" id="container-grafico" style="display:none;">
+                    <h3>Desempenho de Rendimentos</h3>
+                    <canvas id="graficoAutonomo"></canvas>
+                </div>
                 <div class="detalhes-link">
                      <button id="btn-ver-detalhes" style="display: none;">
                         <i class="fas fa-plus-circle"></i> VER MAIS - Detalhes do cálculo e mais informações
