@@ -208,6 +208,24 @@ body{
     transition: background-color 0.2s;
 }
 
+.pdf{
+    background-color: #da0000;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+
+.pdf:hover{
+    background-color: #b30000;
+}
+
+
 #btn-buscar-dados:hover {
     background-color: #006a36;
 }
@@ -333,3 +351,4 @@ body{
     font-size: 18px;
     color: #333;
 }
+

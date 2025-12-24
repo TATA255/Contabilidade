@@ -237,6 +237,8 @@ function renderizarDashboard(dados, nome, dataInicial, dataFinal) {
         dadosResumoDiv.appendChild(card);
     });
     renderizarGrafico(dados.DADOS_GRAFICO);
+    const btnPdf = document.getElementById('btn-gerar-pdf');
+    if (btnPdf) btnPdf.style.display = 'block';
 }
 
 
@@ -267,7 +269,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (inputDataInicial) inputDataInicial.value = defaultDate;
     if (inputDataFinal) inputDataFinal.value = defaultDate;
 
-
+    const btnPdf = document.getElementById('btn-gerar-pdf');
+    if (btnPdf) {
+        btnPdf.addEventListener('click', gerarPDF);
+    }
     // 3. Inicializa: Mostra o painel AUTONOMOS e carrega a lista
     alternarPainel('AUTONOMOS');
     carregarListaAutonomos(); 
@@ -317,4 +322,46 @@ function renderizarGrafico(dadosMensais) {
             }
         }
     });
+}
+
+async function gerarPDF() {
+    const { jsPDF } = window.jspdf;
+    const elemento = document.querySelector('.dashboard-dados'); // Captura a área dos cards e gráfico
+    const btnPdf = document.getElementById('btn-gerar-pdf');
+
+    // Esconde o botão momentaneamente para não sair no PDF
+    btnPdf.style.visibility = 'hidden';
+
+    try {
+        // 1. Transforma o HTML/Canvas em uma imagem
+        const canvas = await html2canvas(elemento, {
+            scale: 2, // Aumenta a qualidade
+            useCORS: true,
+            logging: false,
+            backgroundColor: "#f4f7f9" // Mesma cor de fundo do seu body
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        
+        // 2. Configura o PDF (A4)
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+        // 3. Adiciona título e imagem
+        pdf.setFontSize(16);
+        pdf.text("Relatório de Rendimentos - Autônomo", 15, 15);
+        pdf.addImage(imgData, 'PNG', 0, 25, pdfWidth, pdfHeight);
+
+        // 4. Salva o arquivo
+        const nomeArquivo = `Relatorio_${selectAutonomo.value}_${inputDataInicial.value}.pdf`;
+        pdf.save(nomeArquivo);
+
+    } catch (error) {
+        console.error("Erro ao gerar PDF:", error);
+        alert("Erro ao gerar o PDF. Verifique o console.");
+    } finally {
+        btnPdf.style.visibility = 'visible';
+    }
 }
