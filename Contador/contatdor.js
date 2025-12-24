@@ -15,7 +15,9 @@ const dadosResumoDiv = document.getElementById('dados-resumo-autonomo');
 const tituloPeriodo = document.getElementById('titulo-periodo');
 const btnVerDetalhes = document.getElementById('btn-ver-detalhes');
 const alertaElement = document.getElementById('alerta-mensagem');
-let meuGrafico = null; // Para podermos destruir e recriar o gráfico 
+let meuGrafico = null; // Para podermos destruir e recriar o gráfico
+let graficoReceita = null;
+let graficoRBT12 = null;
 
 // =========================================================================
 // FUNÇÕES DE UTILIDADE E UI
@@ -363,5 +365,131 @@ async function gerarPDF() {
         alert("Erro ao gerar o PDF. Verifique o console.");
     } finally {
         btnPdf.style.visibility = 'visible';
+    }
+}
+
+async function buscarDadosEmpresa() {
+    const nome = document.getElementById('select-empresa').value;
+    const dataIni = document.getElementById('input-data-ini-emp').value;
+    const dataFim = document.getElementById('input-data-fim-emp').value;
+
+    if (!nome || !dataIni || !dataFim) {
+        alert("Selecione a empresa e o período corretamente.");
+        return;
+    }
+
+    const res = await sendDataToAppsScript('getEmpresaDataPeriodo', {
+        nome: nome,
+        dataInicial: dataIni,
+        dataFinal: dataFim
+    });
+
+    if (res.sucesso) {
+        // Exibe o painel de resultados
+        document.getElementById('dashboard-empresas').style.display = 'block';
+        
+        const labels = res.dados.HISTORICO.map(h => h.mes);
+        const faturamentos = res.dados.HISTORICO.map(h => h.faturamento);
+        const rbts = res.dados.HISTORICO.map(h => h.rbt12);
+
+        // --- GRÁFICO DE RECEITA ---
+        const ctxReceita = document.getElementById('graficoReceitaEmpresa').getContext('2d');
+        if (window.meuGraficoReceita) window.meuGraficoReceita.destroy();
+        window.meuGraficoReceita = new Chart(ctxReceita, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Faturamento Mensal (R$)',
+                    data: faturamentos,
+                    backgroundColor: '#3498db'
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // --- GRÁFICO DE RBT12 ---
+        const ctxRbt = document.getElementById('graficoRBTEmpresa').getContext('2d');
+        if (window.meuGraficoRbt) window.meuGraficoRbt.destroy();
+        window.meuGraficoRbt = new Chart(ctxRbt, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'RBT12 (R$)',
+                    data: rbts,
+                    borderColor: '#e67e22',
+                    backgroundColor: 'rgba(230, 126, 34, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+    } else {
+        alert(res.mensagem);
+    }
+}
+
+
+function renderizarGraficosEmpresa(dados) {
+    const labels = dados.HISTORICO.map(h => h.mes);
+    
+    // 1. Gráfico de Receita (Barras)
+    const ctxFat = document.getElementById('graficoReceitaEmpresa').getContext('2d');
+    if (graficoReceita) graficoReceita.destroy();
+    graficoReceita = new Chart(ctxFat, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Faturamento Mensal',
+                data: dados.HISTORICO.map(h => h.faturamento),
+                backgroundColor: '#3498db'
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    // 2. Gráfico de RBT12 (Linha)
+    const ctxRbt = document.getElementById('graficoRBTEmpresa').getContext('2d');
+    if (graficoRBT) graficoRBT.destroy();
+    graficoRBT = new Chart(ctxRbt, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'RBT12',
+                data: dados.HISTORICO.map(h => h.rbt12),
+                borderColor: '#e67e22',
+                backgroundColor: 'rgba(230, 126, 34, 0.1)',
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+}
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', () => {
+    carregarListaEmpresas();
+    document.getElementById('btn-buscar-empresa').addEventListener('click', buscarDadosEmpresa);
+});
+
+async function carregarListaEmpresas() {
+    const select = document.getElementById('select-empresa');
+    if (!select) return;
+
+    const resultado = await sendDataToAppsScript('getEmpresasList', {});
+    if (resultado.sucesso) {
+        select.innerHTML = '<option value="">-- Selecione uma Empresa --</option>';
+        resultado.nomes.forEach(nome => {
+            const opt = document.createElement('option');
+            opt.value = nome;
+            opt.textContent = nome;
+            select.appendChild(opt);
+        });
     }
 }
