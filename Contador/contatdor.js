@@ -11,6 +11,7 @@ const selectAutonomo = document.getElementById('select-autonomo');
 const inputDataInicial = document.getElementById('input-data-inicial');
 const inputDataFinal = document.getElementById('input-data-final');
 const btnBuscarDados = document.getElementById('btn-buscar-dados');
+const btnBuscarDadosEmpresa = document.getElementById('btn-buscar-dados-empresas')
 const dadosResumoDiv = document.getElementById('dados-resumo-autonomo');
 const tituloPeriodo = document.getElementById('titulo-periodo');
 const btnVerDetalhes = document.getElementById('btn-ver-detalhes');
@@ -369,67 +370,97 @@ async function gerarPDF() {
 }
 
 async function buscarDadosEmpresa() {
-    const nome = document.getElementById('select-empresa').value;
-    const dataIni = document.getElementById('input-data-ini-emp').value;
-    const dataFim = document.getElementById('input-data-fim-emp').value;
+    // Captura os elementos do DOM
+    const selectEmpresa = document.getElementById('select-empresa');
+    const inputDataIni = document.getElementById('input-data-ini-emp');
+    const inputDataFim = document.getElementById('input-data-fim-emp');
+    const dashboard = document.getElementById('dashboard-empresas');
+    const resumoFat = document.getElementById('resumo-fat-empresa');
+    const resumoRbt = document.getElementById('resumo-rbt-empresa');
 
+    const nome = selectEmpresa.value;
+    const dataIni = inputDataIni.value;
+    const dataFim = inputDataFim.value;
+
+    btnBuscarDadosEmpresa.textContent ='Buscando...';
+    btnBuscarDadosEmpresa.disabled = true;
+    // Validação básica de campos
     if (!nome || !dataIni || !dataFim) {
-        alert("Selecione a empresa e o período corretamente.");
+        alert("Por favor, selecione a empresa e o período completo (Início e Fim).");
         return;
     }
 
-    const res = await sendDataToAppsScript('getEmpresaDataPeriodo', {
-        nome: nome,
-        dataInicial: dataIni,
-        dataFinal: dataFim
-    });
-
-    if (res.sucesso) {
-        // Exibe o painel de resultados
-        document.getElementById('dashboard-empresas').style.display = 'block';
-        
-        const labels = res.dados.HISTORICO.map(h => h.mes);
-        const faturamentos = res.dados.HISTORICO.map(h => h.faturamento);
-        const rbts = res.dados.HISTORICO.map(h => h.rbt12);
-
-        // --- GRÁFICO DE RECEITA ---
-        const ctxReceita = document.getElementById('graficoReceitaEmpresa').getContext('2d');
-        if (window.meuGraficoReceita) window.meuGraficoReceita.destroy();
-        window.meuGraficoReceita = new Chart(ctxReceita, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Faturamento Mensal (R$)',
-                    data: faturamentos,
-                    backgroundColor: '#3498db'
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
+    try {
+        // Envia os dados para o Google Apps Script
+        const res = await sendDataToAppsScript('getEmpresaDataPeriodo', { 
+            nome: nome, 
+            dataInicial: dataIni, 
+            dataFinal: dataFim 
         });
 
-        // --- GRÁFICO DE RBT12 ---
-        const ctxRbt = document.getElementById('graficoRBTEmpresa').getContext('2d');
-        if (window.meuGraficoRbt) window.meuGraficoRbt.destroy();
-        window.meuGraficoRbt = new Chart(ctxRbt, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'RBT12 (R$)',
-                    data: rbts,
-                    borderColor: '#e67e22',
-                    backgroundColor: 'rgba(230, 126, 34, 0.1)',
-                    fill: true,
-                    tension: 0.3
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
+        if (res.sucesso) {
+            // Torna o dashboard visível após a busca
+            dashboard.style.display = 'block';
+            
+            // 1. Atualiza os Cards de Resumo com formatação de moeda
+            resumoFat.innerText = res.dados.TOTAL_FATURAMENTO.toLocaleString('pt-BR', { 
+                style: 'currency', 
+                currency: 'BRL' 
+            });
 
-    } else {
-        alert(res.mensagem);
+            // Correção do RBT12: Usa o valor processado pelo backend
+            const valorRbtDestaque = res.dados.ULTIMO_RBT12 || 0;
+            resumoRbt.innerText = valorRbtDestaque.toLocaleString('pt-BR', { 
+                style: 'currency', 
+                currency: 'BRL' 
+            });
+
+            // 2. Prepara os dados para os gráficos
+            const labels = res.dados.HISTORICO.map(h => h.mes);
+            const dadosFaturamento = res.dados.HISTORICO.map(h => h.faturamento);
+            const dadosRbt = res.dados.HISTORICO.map(h => h.rbt12);
+
+            // 3. Renderiza os Gráficos utilizando a função auxiliar
+            // Gráfico de Receita (Barra - Azul)
+            renderizarGraficoUnico('graficoReceitaEmpresa', 'Faturamento Mensal', labels, dadosFaturamento, 'bar', '#3498db');
+            
+            // Gráfico de RBT12 (Linha - Laranja)
+            renderizarGraficoUnico('graficoRBTEmpresa', 'RBT12 acumulado', labels, dadosRbt, 'line', '#e67e22');
+
+        } else {
+            alert("Erro ao buscar dados: " + res.mensagem);
+        }
+    } catch (erro) {
+        console.error("Erro na requisição:", erro);
+        alert("Ocorreu um erro ao processar a solicitação.");
     }
+    btnBuscarDadosEmpresa.textContent ='Buscar dados';
+    btnBuscarDadosEmpresa.disabled = false;
+}
+
+function renderizarGraficoUnico(id, label, labels, data, tipo, cor) {
+    const ctx = document.getElementById(id).getContext('2d');
+    if (window[id + 'Chart']) window[id + 'Chart'].destroy();
+
+    window[id + 'Chart'] = new Chart(ctx, {
+        type: tipo,
+        data: {
+            labels: labels,
+            datasets: [{
+                label: label,
+                data: data,
+                backgroundColor: tipo === 'bar' ? cor : 'transparent',
+                borderColor: cor,
+                fill: tipo === 'line',
+                tension: 0.4
+            }]
+        },
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
 }
 
 
