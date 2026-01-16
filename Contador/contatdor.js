@@ -370,28 +370,28 @@ async function gerarPDF() {
 }
 
 async function buscarDadosEmpresa() {
-    // Captura os elementos do DOM
+    btnBuscarDadosEmpresa.textContent = 'Buscando...';
+    btnBuscarDadosEmpresa.disabled = true; 
     const selectEmpresa = document.getElementById('select-empresa');
     const inputDataIni = document.getElementById('input-data-ini-emp');
     const inputDataFim = document.getElementById('input-data-fim-emp');
     const dashboard = document.getElementById('dashboard-empresas');
+    
+    // Elementos de Resumo
     const resumoFat = document.getElementById('resumo-fat-empresa');
     const resumoRbt = document.getElementById('resumo-rbt-empresa');
+    const resumoImp = document.getElementById('resumo-imp-empresa'); // Novo elemento
 
     const nome = selectEmpresa.value;
     const dataIni = inputDataIni.value;
     const dataFim = inputDataFim.value;
 
-    btnBuscarDadosEmpresa.textContent ='Buscando...';
-    btnBuscarDadosEmpresa.disabled = true;
-    // Validação básica de campos
     if (!nome || !dataIni || !dataFim) {
-        alert("Por favor, selecione a empresa e o período completo (Início e Fim).");
+        alert("Por favor, selecione a empresa e o período.");
         return;
     }
 
     try {
-        // Envia os dados para o Google Apps Script
         const res = await sendDataToAppsScript('getEmpresaDataPeriodo', { 
             nome: nome, 
             dataInicial: dataIni, 
@@ -399,43 +399,29 @@ async function buscarDadosEmpresa() {
         });
 
         if (res.sucesso) {
-            // Torna o dashboard visível após a busca
             dashboard.style.display = 'block';
-            
-            // 1. Atualiza os Cards de Resumo com formatação de moeda
-            resumoFat.innerText = res.dados.TOTAL_FATURAMENTO.toLocaleString('pt-BR', { 
-                style: 'currency', 
-                currency: 'BRL' 
-            });
+            const formatar = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-            // Correção do RBT12: Usa o valor processado pelo backend
-            const valorRbtDestaque = res.dados.ULTIMO_RBT12 || 0;
-            resumoRbt.innerText = valorRbtDestaque.toLocaleString('pt-BR', { 
-                style: 'currency', 
-                currency: 'BRL' 
-            });
+            // Atualiza os 3 Cards
+            resumoFat.innerText = formatar(res.dados.TOTAL_FATURAMENTO);
+            resumoRbt.innerText = formatar(res.dados.ULTIMO_RBT12);
+            resumoImp.innerText = formatar(res.dados.TOTAL_IMPOSTO);
 
-            // 2. Prepara os dados para os gráficos
             const labels = res.dados.HISTORICO.map(h => h.mes);
-            const dadosFaturamento = res.dados.HISTORICO.map(h => h.faturamento);
-            const dadosRbt = res.dados.HISTORICO.map(h => h.rbt12);
-
-            // 3. Renderiza os Gráficos utilizando a função auxiliar
-            // Gráfico de Receita (Barra - Azul)
-            renderizarGraficoUnico('graficoReceitaEmpresa', 'Faturamento Mensal', labels, dadosFaturamento, 'bar', '#3498db');
             
-            // Gráfico de RBT12 (Linha - Laranja)
-            renderizarGraficoUnico('graficoRBTEmpresa', 'RBT12 acumulado', labels, dadosRbt, 'line', '#e67e22');
+            // Renderiza os 3 Gráficos
+            renderizarGraficoUnico('graficoReceitaEmpresa', 'Faturamento', labels, res.dados.HISTORICO.map(h => h.faturamento), 'bar', '#3498db');
+            renderizarGraficoUnico('graficoRBTEmpresa', 'RBT12', labels, res.dados.HISTORICO.map(h => h.rbt12), 'line', '#e67e22');
+            renderizarGraficoUnico('graficoImpEmpresa', 'Imposto Pago', labels, res.dados.HISTORICO.map(h => h.imposto), 'bar', '#e74c3c');
 
         } else {
-            alert("Erro ao buscar dados: " + res.mensagem);
+            alert(res.mensagem);
         }
     } catch (erro) {
-        console.error("Erro na requisição:", erro);
-        alert("Ocorreu um erro ao processar a solicitação.");
+        console.error("Erro:", erro);
     }
-    btnBuscarDadosEmpresa.textContent ='Buscar dados';
-    btnBuscarDadosEmpresa.disabled = false;
+    btnBuscarDadosEmpresa.textContent = 'Buscar Dados';
+    btnBuscarDadosEmpresa.disabled = false; 
 }
 
 function renderizarGraficoUnico(id, label, labels, data, tipo, cor) {
